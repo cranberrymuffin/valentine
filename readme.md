@@ -7,18 +7,18 @@ This project demonstrates how to build a 3D heart shape using mathematical equat
 ### Implicit Equations vs Parametric Equations
 
 1. **Implicit Equations** define shapes as relationships between variables. For example, a sphere can be represented by the equation:
-   \[
+
    x^2 + y^2 + z^2 = r^2
-   \]
+
    where "r" is the radius.
 
 2. **Parametric Equations** describe each variable as a function of one or more parameters. For example, a sphere can be described with the parametric equations:
 
-   - \( x = r \cdot \sin(\phi) \cdot \cos(\theta) \)
-   - \( y = r \cdot \sin(\phi) \cdot \sin(\theta) \)
-   - \( z = r \cdot \cos(\phi) \)
+- x = r _ sin(v) _ (15 _ sin(u) - 4 _ sin(3 \* u))
+- y = sin(v) _ (15 _ cos(u) - 5 _ cos(2 _ u) - 2 _ cos(3 _ u) - cos(2 \* u))
+- z = 8 \* cos(v)
 
-   These equations offer an easier approach for computation, especially in code.
+These equations offer an easier approach for computation, especially in code.
 
 ### Why Parametric Equations?
 
