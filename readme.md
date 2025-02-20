@@ -1,178 +1,114 @@
-# Snowstorm: A Wintertime Web Game
+# Valentine
+
+This project demonstrates how to build a 3D heart shape using mathematical equations in 3D space. We use both **implicit** and **parametric** equations to represent and generate the heart's geometry and render it using a 3D mesh.
 
 ## Overview
 
-Snowstorm is a web-based game where players destroy evil (red team) snowmen while avoiding good (green team) snowmen. Destroying good snowmen results in lost points.
+### Implicit Equations vs Parametric Equations
 
-This README explains how the visual effects of Snowstorm were created, covering both snowfall and snowmen rendering.
+1. **Implicit Equations** define shapes as relationships between variables. For example, a sphere can be represented by the equation:
+   \[
+   x^2 + y^2 + z^2 = r^2
+   \]
+   where "r" is the radius.
 
----
+2. **Parametric Equations** describe each variable as a function of one or more parameters. For example, a sphere can be described with the parametric equations:
 
-## Making it Snow
+   - \( x = r \cdot \sin(\phi) \cdot \cos(\theta) \)
+   - \( y = r \cdot \sin(\phi) \cdot \sin(\theta) \)
+   - \( z = r \cdot \cos(\phi) \)
 
-To create the illusion of snowfall:
+   These equations offer an easier approach for computation, especially in code.
 
-- Particles are generated at random positions within a 3D spherical bounding volume, each representing a snowflake.
-- These particles slowly rotate around the x-axis to create a swirling effect, giving the appearance of a snowstorm.
-- The camera is positioned at the center of the sphere, making the player feel immersed in the storm.
+### Why Parametric Equations?
 
-### Code for Generating Snowflake Particles
+When generating coordinates for a mesh, **parametric equations** are easier to implement than implicit equations. Implicit equations define a shape as a set of points satisfying a condition but don’t offer a direct way to generate a list of coordinates, making them computationally difficult to handle. In contrast, parametric equations explicitly define how to compute each point, making them more efficient and simpler to use in code.
 
-```javascript
-function generateRandomParticleInSphere(radius) {
-  const phi = Math.random() * 2 * Math.PI;
-  const theta = Math.acos(2 * Math.random() - 1);
-  const r = Math.cbrt(Math.random()) * radius;
+## Heart Geometry
 
-  const x = r * Math.sin(theta) * Math.cos(phi);
-  const y = r * Math.sin(theta) * Math.sin(phi);
-  const z = r * Math.cos(theta);
+The 3D heart is generated using **Julia’s Heart** parametric equations. The mesh is constructed by generating vertices based on the parametric formula and then defining faces (triangles) that connect these vertices. Normals are calculated for proper lighting and shading effects.
 
-  return [x, y, z];
-}
-```
-
-### Animating Snowfall
+### Custom Heart Geometry
 
 ```javascript
-useFrame((state, delta) => {
-  snow.current.rotation.x -= delta * 0.05;
-});
-```
+// Custom heart geometry function
+function createHeartGeometry() {
+  const geometry = new BufferGeometry();
 
-Each particle is mapped to a PNG image of a snowflake for realism.
+  const vertices = [];
+  const indices = [];
 
----
+  const uSteps = 64; // Number of divisions in u-direction
+  const vSteps = 32; // Number of divisions in v-direction
+  const uStepSize = (2 * Math.PI) / uSteps;
+  const vStepSize = Math.PI / vSteps;
 
-## Displaying the Snowmen
+  // Generate vertices
+  for (let vi = 0; vi <= vSteps; vi++) {
+    const v = vi * vStepSize;
 
-Snowmen are created using simple 3D geometry (spheres, cones) and can be either good (green) or evil (red) based on a React prop.
+    for (let ui = 0; ui <= uSteps; ui++) {
+      const u = ui * uStepSize;
 
-### Snowman Component
+      const x = Math.sin(v) * (15 * Math.sin(u) - 4 * Math.sin(3 * u));
+      const z = 8 * Math.cos(v);
+      const y =
+        Math.sin(v) *
+        (15 * Math.cos(u) -
+          5 * Math.cos(2 * u) -
+          2 * Math.cos(3 * u) -
+          Math.cos(2 * u));
 
-```javascript
-function Snowman(props) {
-  return (
-    <group>
-      {/* Bottom sphere */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[1, 32, 32]} />
-        <meshStandardMaterial color="white" />
-      </mesh>
-
-      {/* Middle sphere */}
-      <mesh position={[0, 1.2, 0]}>
-        <sphereGeometry args={[0.8, 32, 32]} />
-        <meshStandardMaterial color={props.evil ? 'red' : 'green'} />
-      </mesh>
-
-      {/* Head */}
-      <mesh position={[0, 2.2, 0]}>
-        <sphereGeometry args={[0.6, 32, 32]} />
-        <meshStandardMaterial color="white" />
-      </mesh>
-
-      {/* Eyes */}
-      <mesh position={[-0.2, 2.4, 0.5]}>
-        <sphereGeometry args={[0.05, 32, 32]} />
-        <meshStandardMaterial color="black" />
-      </mesh>
-      <mesh position={[0.2, 2.4, 0.5]}>
-        <sphereGeometry args={[0.05, 32, 32]} />
-        <meshStandardMaterial color="black" />
-      </mesh>
-
-      {/* Nose */}
-      <mesh position={[0, 2.3, 0.6]}>
-        <coneGeometry args={[0.1, 0.3, 32]} />
-        <meshStandardMaterial color={props.evil ? 'red' : 'green'} />
-      </mesh>
-    </group>
-  );
-}
-```
-
----
-
-## The Camera Frustum
-
-The **camera frustum** defines the visible 3D area from the camera's perspective. Snowmen are generated within this frustum to ensure they are always visible when they appear.
-
----
-
-## Movement
-
-Each frame, snowmen move forward along the z-axis. When they pass the camera, their positions reset to a random location within the camera frustum.
-
-```javascript
-useFrame((state, delta) => {
-  snowman.current.position.z += delta * speed;
-  if (snowman.current.position.z > cameraBoundary) {
-    resetSnowmanPosition();
+      vertices.push(x, y, z);
+    }
   }
-});
+
+  // Generate indices for the faces
+  for (let vi = 0; vi < vSteps; vi++) {
+    for (let ui = 0; ui < uSteps; ui++) {
+      const current = vi * (uSteps + 1) + ui;
+      const next = current + uSteps + 1;
+
+      indices.push(current, current + 1, next);
+      indices.push(next, current + 1, next + 1);
+    }
+  }
+
+  // Set vertices and indices in geometry
+  geometry.setAttribute('position', new Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+
+  return geometry;
+}
 ```
 
----
+## Recipe for a Mesh
 
-## Destroying Snowmen
+To generate a 3D mesh, the following components are necessary:
 
-Clicking on a snowman makes it invisible, effectively destroying it.
+- **Vertices**: Define the shape of the object in 3D space.
+- **Faces**: Connect vertices to form surfaces.
+- **Normals**: Provide lighting information for realistic rendering.
 
-```javascript
-<mesh onClick={() => setVisible(false)}>
-```
+Without these components, the mesh would not have its full 3D representation. Vertices without faces are just floating points, faces without normals would lack proper lighting, and normals without faces wouldn’t affect any surfaces.
 
----
-
-## Points System
-
-A point store is created using Zustand to track the player's score.
-
-```javascript
-import create from 'zustand';
-
-const useStore = create(set => ({
-  points: 0,
-  increasePoints: () => set(state => ({ points: state.points + 1 })),
-  decreasePoints: () => set(state => ({ points: state.points - 1 })),
-}));
-```
-
-When a snowman is clicked, the score increases or decreases depending on its type.
-
-```javascript
-const { increasePoints, decreasePoints } = useStore();
-
-onClick={() => props.evil ? increasePoints() : decreasePoints()}
-```
-
----
-
-## Technologies Used
-
-- **React Three Fiber** for rendering 3D scenes
-- **Zustand** for state management
-- **JavaScript (ES6+)** for game logic
-
----
-
-## Installation & Running the Game
+## Installation
 
 1. Clone the repository:
+
 2. Install dependencies:
-   ```sh
-   npm install && npm run dev
+
+   ```bash
+   npm install
    ```
 
----
+3. Run the app:
 
-## Contributions
-
-Contributions are welcome! Feel free to submit a pull request from your fork, or open an issue.
-
----
+   ```bash
+   npm run dev
+   ```
 
 ## License
 
-This project is licensed under the MIT License. See `LICENSE` for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
