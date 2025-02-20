@@ -1,0 +1,29 @@
+{
+  "name": "valentine",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
+    "lint": "eslint . --max-warnings 1",
+    "prettier:check": "prettier . --check",
+    "prettier:write": "prettier . --write"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "4.3",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "prettier": "^3.4.2",
+    "vite": "^5.3.3"
+  },
+  "dependencies": {
+    "@react-three/fiber": "8.16",
+    "react": "18.3",
+    "react-scripts": "^5.0.1",
+    "three": "^0.166.1",
+    "vite-plugin-restart": "^0.4.2"
+  }
+}
